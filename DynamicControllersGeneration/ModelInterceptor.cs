@@ -1,0 +1,116 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
+using Castle.Core.Interceptor;
+
+namespace DynamicControllersGeneration
+{
+    internal class ModelInterceptor : IInterceptor
+    {
+        private readonly object model;
+        private readonly Dictionary<string, string> errors = new Dictionary<string, string>();
+
+        public ModelInterceptor(object model)
+        {
+            this.model = model;
+        }
+
+        public void RegisterProxy(object classProxy)
+        {
+            InitializeModelFields(classProxy);
+            UpdatePropertiesErrors(classProxy);
+        }
+
+        private void InitializeModelFields(object classProxy)
+        {
+            var viewModelType = classProxy.GetType().BaseType;
+            var viewModelFields = viewModelType.GetFields(BindingFlags.Instance|BindingFlags.NonPublic |BindingFlags.Public);
+            var modelFields = viewModelFields
+                .Where(fieldInfo =>fieldInfo.IsDefined(typeof(ModelAttribute), false))
+                .Where(fieldInfo => fieldInfo.FieldType.IsAssignableFrom(model.GetType()));
+            foreach (var modelField in modelFields)
+            {
+                modelField.SetValue(classProxy, model);
+            }
+        }
+
+        public void Intercept(IInvocation invocation)
+        {
+            var methodAnalyzer = new MethodAnalyzer(invocation.Method);
+            if (methodAnalyzer.IsIndexer)
+            {
+                invocation.ReturnValue = errors[(string) invocation.Arguments[0]];
+                return;
+            }
+
+            if (methodAnalyzer.IsSetter || methodAnalyzer.IsGetter)
+            {
+                ForwardCallToModel(invocation);
+            }
+
+            if (methodAnalyzer.IsSetter)
+            {
+                UpdateValidationErrors(invocation);
+                RaisePropertyChangedEvent(invocation);
+            }
+        }
+
+        private void UpdatePropertiesErrors(object classProxy)
+        {
+            foreach (var property in classProxy.GetType().BaseType.GetProperties()
+                .Where(info => model.GetType().GetProperty(info.Name) != null))
+            {
+                var getter = property.GetGetMethod();
+                if (getter.GetParameters().Length > 0)
+                {
+                    continue;
+                }
+                var value = getter.Invoke(classProxy, new object[0]);
+                UpdatePropertyValidationErrors(property, value);
+            }
+        }
+
+        private void UpdateValidationErrors(IInvocation invocation)
+        {
+            var property = invocation.TargetType.GetProperty(invocation.Method.Name.Remove(0, 4));
+            UpdatePropertyValidationErrors(property, invocation.Arguments[0]);
+        }
+
+        private void UpdatePropertyValidationErrors(PropertyInfo property, object value)
+        {
+            var validationAttributes = property
+                .GetCustomAttributes(typeof (ValidationAttribute), true)
+                .Cast<ValidationAttribute>();
+
+            var propertyError = validationAttributes
+                .Select(validationAttribute => validationAttribute.Validate(value))
+                .FirstOrDefault(error => !string.IsNullOrEmpty(error));
+
+            errors[property.Name] = propertyError;
+        }
+
+        private static void RaisePropertyChangedEvent(IInvocation invocation)
+        {
+            Type implementedInterface = invocation.TargetType.GetInterface(typeof (INotifyPropertyChanged).Name);
+            var isImplementingNotifyPropertyChanged = implementedInterface == typeof (INotifyPropertyChanged);
+            if(!isImplementingNotifyPropertyChanged)
+            {
+                return;
+            }
+
+            var changedPropertyName = invocation.Method.Name.Remove(0, "get_".Length);
+            var eventArgs = new PropertyChangedEventArgs(changedPropertyName);
+            
+            var eventsRaiser = new EventsRaiser(invocation.InvocationTarget);
+            eventsRaiser.Raise("PropertyChanged", invocation.InvocationTarget, eventArgs);
+        }
+
+        private void ForwardCallToModel(IInvocation invocation)
+        {
+            var methodInfo = model.GetType().GetMethod(invocation.Method.Name);
+            invocation.ReturnValue = methodInfo.Invoke(model, invocation.Arguments);
+        }
+    }
+}

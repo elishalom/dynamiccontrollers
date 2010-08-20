@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicControllersGeneration", "DynamicControllersGeneration\DynamicControllersGeneration.csproj", "{F2F18E6D-9626-40F1-8EF4-915DADF7C16F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{D21DCFBD-D26B-4E15-B9EB-850D9B08AE13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicControllersGeneration.Tests", "DynamicControllersGeneration.Tests\DynamicControllersGeneration.Tests.csproj", "{0825985F-CB48-4F37-B5F8-CEF3FA2D4BF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicControllersGenerationUnitTests", "Tests\DynamicControllersGenerationUnitTests\DynamicControllersGenerationUnitTests.csproj", "{2FB0BE05-68FF-4181-BC9E-53EB773875B0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F2F18E6D-9626-40F1-8EF4-915DADF7C16F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2F18E6D-9626-40F1-8EF4-915DADF7C16F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2F18E6D-9626-40F1-8EF4-915DADF7C16F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2F18E6D-9626-40F1-8EF4-915DADF7C16F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0825985F-CB48-4F37-B5F8-CEF3FA2D4BF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0825985F-CB48-4F37-B5F8-CEF3FA2D4BF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0825985F-CB48-4F37-B5F8-CEF3FA2D4BF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0825985F-CB48-4F37-B5F8-CEF3FA2D4BF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FB0BE05-68FF-4181-BC9E-53EB773875B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FB0BE05-68FF-4181-BC9E-53EB773875B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FB0BE05-68FF-4181-BC9E-53EB773875B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FB0BE05-68FF-4181-BC9E-53EB773875B0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0825985F-CB48-4F37-B5F8-CEF3FA2D4BF3} = {D21DCFBD-D26B-4E15-B9EB-850D9B08AE13}
+		{2FB0BE05-68FF-4181-BC9E-53EB773875B0} = {D21DCFBD-D26B-4E15-B9EB-850D9B08AE13}
+	EndGlobalSection
+EndGlobal
