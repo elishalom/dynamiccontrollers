@@ -6,15 +6,17 @@ namespace DynamicControllersGeneration
     public class ValidationAttribute : Attribute
     {
         private readonly Type validatorType;
+        private readonly object[] args;
 
-        public ValidationAttribute(Type validatorType)
+        public ValidationAttribute(Type validatorType, params object[] args )
         {
             this.validatorType = validatorType;
+            this.args = args;
         }
 
         public string Validate(object value)
         {
-            var validator = (IValidator)Activator.CreateInstance(validatorType);
+            var validator = (IValidator)Activator.CreateInstance(validatorType, args);
             return validator.Validate(value);
         }
     }

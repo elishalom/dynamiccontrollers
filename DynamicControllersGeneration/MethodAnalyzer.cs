@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 
 namespace DynamicControllersGeneration
 {
@@ -27,6 +28,8 @@ namespace DynamicControllersGeneration
         {
             get { return method.Name == "get_Item"; }
         }
+
+        public PropertyInfo MatchingProperty { get { return method.DeclaringType.GetProperty(method.Name.Substring(4)); } }
 
         private bool IsPropertyAccessor(string accessorPrefix)
         {

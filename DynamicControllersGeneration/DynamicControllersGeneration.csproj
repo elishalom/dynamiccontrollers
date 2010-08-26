@@ -50,6 +50,7 @@
     <Compile Include="IValidator.cs" />
     <Compile Include="ModelAttribute.cs" />
     <Compile Include="ModelInterceptor.cs" />
+    <Compile Include="RelatedPropertyAttribute.cs" />
     <Compile Include="ViewModelGenerator.cs" />
     <Compile Include="PropertiesFilter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

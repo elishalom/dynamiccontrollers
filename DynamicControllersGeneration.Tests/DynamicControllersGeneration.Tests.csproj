@@ -42,8 +42,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MvvmGeneratorBackingFieldModelTests.cs" />
+    <Compile Include="MvvmGeneratorRelatedPropertyTests.cs" />
     <Compile Include="MvvmGeneratorTests.cs" />
     <Compile Include="MvvmGeneratorWithDataErrorInfoTests.cs" />
+    <Compile Include="MvvmGeneratorWithDataErrorInfoWithPartialImplementationTests.cs" />
     <Compile Include="MvvmGeneratorWithPropertyChangedTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

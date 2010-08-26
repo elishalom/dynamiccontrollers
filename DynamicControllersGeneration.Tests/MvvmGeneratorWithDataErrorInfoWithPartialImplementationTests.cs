@@ -1,10 +1,11 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using NUnit.Framework;
 
 namespace DynamicControllersGeneration.Tests
 {
     [TestFixture]
-    public class MvvmGeneratorWithDataErrorInfoTests
+    public class MvvmGeneratorWithDataErrorInfoWithPartialImplementationTests
     {
         public class Model
         {
@@ -13,11 +14,17 @@ namespace DynamicControllersGeneration.Tests
 
         public abstract class ViewModel : IDataErrorInfo
         {
-            public abstract string this[string columnName] { get; }
+            public virtual string this[string columnName]
+            {
+                get { return "Error from base"; }
+            }
+
             public abstract string Error { get; }
 
             [Validation(typeof(DummyValidator))]
             public abstract object Prop { get; set; }
+            
+            public object OtherProp { get; set; }
         }
 
         public class DummyValidator : IValidator
@@ -48,7 +55,7 @@ namespace DynamicControllersGeneration.Tests
             var model = new Model();
             ViewModel generatedViewModel = mvvmGenerator.Generate<ViewModel>(model);
 
-            Assert.That(generatedViewModel["Prop"], Is.Not.Null);
+            Assert.That(generatedViewModel["OtherProp"], Is.EqualTo("Error from base"));
         }
     }
 }

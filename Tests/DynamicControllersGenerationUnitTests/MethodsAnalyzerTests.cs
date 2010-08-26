@@ -86,5 +86,15 @@ namespace DynamicControllersGenerationUnitTests
 
             Assert.That(methodsAnalyzer.IsSetter, Is.False);
         }
+    
+        [Test]
+        public void MatchingProperty_PropertyGetter_ReturnsCorrectProperty()
+        {
+            var propertyInfo = typeof (MyClass).GetProperty("Prop");
+            var getter = propertyInfo.GetGetMethod();
+            var methodsAnalyzer = new MethodAnalyzer(getter);
+
+            Assert.That(methodsAnalyzer.MatchingProperty, Is.EqualTo(propertyInfo));
+        }
     }
 }

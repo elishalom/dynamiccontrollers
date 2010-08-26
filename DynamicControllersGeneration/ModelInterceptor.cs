@@ -41,7 +41,16 @@ namespace DynamicControllersGeneration
             var methodAnalyzer = new MethodAnalyzer(invocation.Method);
             if (methodAnalyzer.IsIndexer)
             {
-                invocation.ReturnValue = errors[(string) invocation.Arguments[0]];
+                var propertyName = (string) invocation.Arguments[0];
+                if (errors.ContainsKey(propertyName))
+                {
+                    invocation.ReturnValue = errors[propertyName];
+                }
+                else
+                {
+                    invocation.Proceed();
+                }
+                
                 return;
             }
 
@@ -105,6 +114,13 @@ namespace DynamicControllersGeneration
             
             var eventsRaiser = new EventsRaiser(invocation.InvocationTarget);
             eventsRaiser.Raise("PropertyChanged", invocation.InvocationTarget, eventArgs);
+
+            var relatedProperties = new MethodAnalyzer(invocation.Method).MatchingProperty.GetCustomAttributes(typeof(RelatedPropertyAttribute), true).Cast<RelatedPropertyAttribute>().Select(attribute => attribute.PropertyName);
+            foreach (var relatedPropertyAttribute in relatedProperties)
+            {
+                var propertyChangedEventArgs = new PropertyChangedEventArgs(relatedPropertyAttribute);
+                eventsRaiser.Raise("PropertyChanged", invocation.InvocationTarget, propertyChangedEventArgs);
+            }
         }
 
         private void ForwardCallToModel(IInvocation invocation)
