@@ -11,14 +11,16 @@ namespace DynamicControllersGeneration
             return methodInfo.Name.StartsWith("get_") || methodInfo.Name.StartsWith("set_");
         }
 
+        public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
+        {
+        }
+
         public void NonVirtualMemberNotification(Type type, MemberInfo memberInfo)
         {
-            return;
         }
 
         public void MethodsInspected()
         {
-            return;
         }
     }
 }
