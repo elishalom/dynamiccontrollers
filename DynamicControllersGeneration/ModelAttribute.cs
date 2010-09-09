@@ -2,6 +2,6 @@
 
 namespace DynamicControllersGeneration
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
     public class ModelAttribute : Attribute { }
 }

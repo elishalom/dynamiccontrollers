@@ -15,7 +15,7 @@ namespace DynamicControllersGeneration
             propertiesFilter = new PropertiesFilter();
         }
 
-        public T Generate<T>(object model)  where T : class 
+        public T Generate<T>(params object[] model)  where T : class 
         {
             var proxyGenerationOptions = new ProxyGenerationOptions(propertiesFilter);
             var modelInterceptor = new ModelInterceptor(model);
