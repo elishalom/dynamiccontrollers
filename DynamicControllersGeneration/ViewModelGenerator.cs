@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Reflection;
 using Castle.DynamicProxy;
 
@@ -15,16 +17,101 @@ namespace DynamicControllersGeneration
             propertiesFilter = new PropertiesFilter();
         }
 
-        public T Generate<T>(params object[] model)  where T : class 
+        public T Generate<T>(params object[] factoryMethodArguments)  where T : class 
         {
-            var proxyGenerationOptions = new ProxyGenerationOptions(propertiesFilter);
-            var modelInterceptor = new ModelInterceptor(model);
+            Contract.Requires(factoryMethodArguments != null);
+            Contract.Requires(factoryMethodArguments.Length > 0);
 
-            object[] constructorArguments = GetConstructorArguments<T>(model);
-            var classProxy = (T) proxyGenerator.CreateClassProxy(typeof (T), proxyGenerationOptions, constructorArguments, modelInterceptor);
+            var proxyGenerationOptions = new ProxyGenerationOptions(propertiesFilter);
+
+            ConstructorInfo matchingConstructor = GetMatchingConstructor(typeof(T), factoryMethodArguments);
+            var hasMatchingNonDefaultCtor = matchingConstructor != null;
+
+            ModelInterceptor modelInterceptor = CreateModelInterceptor(factoryMethodArguments, matchingConstructor, hasMatchingNonDefaultCtor);
+            
+            T classProxy = CreateViewModelProxy<T>(factoryMethodArguments, hasMatchingNonDefaultCtor, proxyGenerationOptions, modelInterceptor);
             modelInterceptor.RegisterProxy(classProxy);
 
             return classProxy;
+        }
+
+        private T CreateViewModelProxy<T>(object[] factoryMethodArguments, bool hasMatchingNonDefaultCtor, ProxyGenerationOptions proxyGenerationOptions, ModelInterceptor modelInterceptor)
+        {
+            object[] constructorArguments = GetConstructorArguments(factoryMethodArguments, hasMatchingNonDefaultCtor);
+            return (T)proxyGenerator.CreateClassProxy(typeof(T), proxyGenerationOptions, constructorArguments, modelInterceptor);
+        }
+
+        private ModelInterceptor CreateModelInterceptor(object[] factoryMethodArguments, ConstructorInfo matchingConstructor, bool hasMatchingNonDefaultCtor)
+        {
+            object model = GetModel(factoryMethodArguments, matchingConstructor, hasMatchingNonDefaultCtor);
+            return new ModelInterceptor(model);
+        }
+
+        private object[] GetConstructorArguments(object[] factoryMethodArguments, bool hasMatchingNonDefaultCtor)
+        {
+            if(hasMatchingNonDefaultCtor)
+            {
+                return factoryMethodArguments;
+            }
+
+            return new object[0];
+        }
+
+        private object GetModel(object[] factoryMethodArguments, ConstructorInfo matchingConstructor, bool hasMatchingNonDefaultCtor)
+        {
+            if(hasMatchingNonDefaultCtor)
+            {
+                return GetModel(factoryMethodArguments, matchingConstructor);
+            }
+
+            return factoryMethodArguments[0];
+        }
+
+        private ConstructorInfo GetMatchingConstructor(Type viewModelType, object[] factoryMethodArguments)
+        {
+            var nonPrivateCtors = viewModelType
+                .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.NonPublic)
+                .Where(info => !info.IsPrivate);
+            var argumentsTypes = factoryMethodArguments.Select(argument => argument.GetType()).ToArray();
+            return nonPrivateCtors
+                .FirstOrDefault(info => IsMatch(info.GetParameters(), argumentsTypes));
+        }
+
+        private object GetModel(object[] factoryMethodArguments, ConstructorInfo matchingConstructor)
+        {
+            var ctorParameters = matchingConstructor.GetParameters();
+            for (int i = 0; i < ctorParameters.Length; i++)
+            {
+                if(ctorParameters[i].IsDefined(typeof (ModelAttribute), false))
+                {
+                    return factoryMethodArguments[i];
+                }
+            }
+
+            if (ctorParameters.Length == 1 && factoryMethodArguments.Length==1)
+            {
+                return factoryMethodArguments[0];
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private bool IsMatch(ParameterInfo[] parameters, Type[] arguments)
+        {
+            if(parameters.Length != arguments.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                if (!parameters[i].ParameterType.IsAssignableFrom(arguments[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static object[] GetConstructorArguments<T>(object model)
