@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
@@ -67,8 +68,9 @@ namespace DynamicControllersGeneration
             return factoryMethodArguments[0];
         }
 
-        private ConstructorInfo GetMatchingConstructor(Type viewModelType, object[] factoryMethodArguments)
+        private ConstructorInfo GetMatchingConstructor(Type viewModelType, IEnumerable<object> factoryMethodArguments)
         {
+            Contract.Requires(factoryMethodArguments != null);
             var nonPrivateCtors = viewModelType
                 .GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.NonPublic)
                 .Where(info => !info.IsPrivate);

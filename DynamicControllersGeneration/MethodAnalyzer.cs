@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.Contracts;
+using System.Reflection;
 
 namespace DynamicControllersGeneration
 {
@@ -28,10 +29,24 @@ namespace DynamicControllersGeneration
             get { return method.Name == "get_Item"; }
         }
 
-        public PropertyInfo MatchingProperty { get { return method.DeclaringType.GetProperty(method.Name.Substring(4)); } }
+        public PropertyInfo MatchingProperty
+        {
+            get
+            {
+                if (!IsGetter && !IsSetter)
+                {
+                    return null;
+                }
+
+                Contract.Assume(method.Name.Length >= 4);
+                
+                return method.DeclaringType.GetProperty(method.Name.Substring(4));
+            }
+        }
 
         private bool IsPropertyAccessor(string accessorPrefix)
         {
+            Contract.Requires(accessorPrefix != null);
             var hasGetterPrefix = method.Name.StartsWith(accessorPrefix);
             if (!hasGetterPrefix)
             {
@@ -44,6 +59,7 @@ namespace DynamicControllersGeneration
 
         private bool HasMatchingProperty(string expectedPropertyName)
         {
+            Contract.Requires(expectedPropertyName != null);
             var matchingProperty = method.DeclaringType.GetProperty(expectedPropertyName);
             return matchingProperty != null;
         }

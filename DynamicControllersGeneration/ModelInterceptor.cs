@@ -61,8 +61,8 @@ namespace DynamicControllersGeneration
 
             if (methodAnalyzer.IsSetter)
             {
-                UpdateValidationErrors(invocation);
-                RaisePropertyChangedEvent(invocation);
+                UpdateValidationErrors(invocation, methodAnalyzer);
+                RaisePropertyChangedEvent(invocation, methodAnalyzer);
             }
         }
 
@@ -81,9 +81,9 @@ namespace DynamicControllersGeneration
             }
         }
 
-        private void UpdateValidationErrors(IInvocation invocation)
+        private void UpdateValidationErrors(IInvocation invocation, MethodAnalyzer invocationMethodAnalyzer)
         {
-            var property = invocation.TargetType.GetProperty(invocation.Method.Name.Remove(0, 4));
+            var property = invocationMethodAnalyzer.MatchingProperty;
             UpdatePropertyValidationErrors(property, invocation.Arguments[0]);
         }
 
@@ -100,7 +100,7 @@ namespace DynamicControllersGeneration
             errors[property.Name] = propertyError;
         }
 
-        private static void RaisePropertyChangedEvent(IInvocation invocation)
+        private static void RaisePropertyChangedEvent(IInvocation invocation, MethodAnalyzer invocationMethodAnalyzer)
         {
             Type implementedInterface = invocation.TargetType.GetInterface(typeof (INotifyPropertyChanged).Name);
             var isImplementingNotifyPropertyChanged = implementedInterface == typeof (INotifyPropertyChanged);
@@ -109,7 +109,7 @@ namespace DynamicControllersGeneration
                 return;
             }
 
-            var changedPropertyName = invocation.Method.Name.Remove(0, "get_".Length);
+            var changedPropertyName = invocationMethodAnalyzer.MatchingProperty.Name;
             var eventArgs = new PropertyChangedEventArgs(changedPropertyName);
             
             var eventsRaiser = new EventsRaiser(invocation.InvocationTarget);
