@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace DynamicControllersGeneration
 {
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class ValidationAttribute : Attribute
     {
         private readonly IEnumerable<IValidator> validators;
