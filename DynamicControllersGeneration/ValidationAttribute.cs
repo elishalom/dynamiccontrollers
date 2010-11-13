@@ -1,32 +1,37 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace DynamicControllersGeneration
 {
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
     public class ValidationAttribute : Attribute
     {
-        private readonly Type validatorType;
-        private readonly object[] args;
+        private readonly IEnumerable<IValidator> validators;
 
-        [ContractInvariantMethod]
-        private void ContractInvariantMethod()
-        {
-            Contract.Invariant(validatorType != null);
-        }
 
-        public ValidationAttribute(Type validatorType, params object[] args )
+        public ValidationAttribute(params Type[] validatorsTypes)
         {
-            Contract.Requires<ArgumentException>(validatorType != null);
-            Contract.Requires<ArgumentException>(typeof(IValidator).IsAssignableFrom(validatorType));
-            this.validatorType = validatorType;
-            this.args = args;
+            Contract.Requires<ArgumentException>(validatorsTypes != null);
+            Contract.Requires<ArgumentException>(Contract.ForAll(validatorsTypes,
+                                                                 validatorType =>
+                                                                 typeof (IValidator).IsAssignableFrom(validatorType)));
+
+            validators = validatorsTypes.Select(validatorType => (IValidator)Activator.CreateInstance(validatorType));
         }
 
         public string Validate(object value)
         {
-            var validator = (IValidator)Activator.CreateInstance(validatorType, args);
-            return validator.Validate(value);
+            return validators.Select(validator => validator.Validate(value))
+                .FirstOrDefault(validationResult => validationResult != null);
         }
+
+        public ValidationMethod ValidationMethod { get; set; }
+    }
+
+    public enum ValidationMethod
+    {
+        FailOnFirst
     }
 }

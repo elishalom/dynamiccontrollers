@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Reflection;
 using Castle.DynamicProxy;
@@ -11,9 +12,11 @@ namespace DynamicControllersGeneration
     {
         private readonly object model;
         private readonly Dictionary<string, string> errors = new Dictionary<string, string>();
+        private static readonly Type propertyChangedInterface = typeof (INotifyPropertyChanged);
 
-        public ModelInterceptor(object model)
+        internal ModelInterceptor(object model)
         {
+            Contract.Requires(model != null);
             this.model = model;
         }
 
@@ -102,8 +105,8 @@ namespace DynamicControllersGeneration
 
         private static void RaisePropertyChangedEvent(IInvocation invocation, MethodAnalyzer invocationMethodAnalyzer)
         {
-            Type implementedInterface = invocation.TargetType.GetInterface(typeof (INotifyPropertyChanged).Name);
-            var isImplementingNotifyPropertyChanged = implementedInterface == typeof (INotifyPropertyChanged);
+            Type implementedInterface = invocation.TargetType.GetInterface(propertyChangedInterface.Name);
+            var isImplementingNotifyPropertyChanged = implementedInterface == propertyChangedInterface;
             if(!isImplementingNotifyPropertyChanged)
             {
                 return;

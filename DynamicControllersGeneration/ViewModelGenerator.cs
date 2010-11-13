@@ -22,7 +22,8 @@ namespace DynamicControllersGeneration
         {
             Contract.Requires(factoryMethodArguments != null);
             Contract.Requires(factoryMethodArguments.Length > 0);
-
+            Contract.Ensures(Contract.Result<T>() != null);
+            
             var proxyGenerationOptions = new ProxyGenerationOptions(propertiesFilter);
 
             ConstructorInfo matchingConstructor = GetMatchingConstructor(typeof(T), factoryMethodArguments);
@@ -42,13 +43,13 @@ namespace DynamicControllersGeneration
             return (T)proxyGenerator.CreateClassProxy(typeof(T), proxyGenerationOptions, constructorArguments, modelInterceptor);
         }
 
-        private ModelInterceptor CreateModelInterceptor(object[] factoryMethodArguments, ConstructorInfo matchingConstructor, bool hasMatchingNonDefaultCtor)
+        private static ModelInterceptor CreateModelInterceptor(object[] factoryMethodArguments, ConstructorInfo matchingConstructor, bool hasMatchingNonDefaultCtor)
         {
             object model = GetModel(factoryMethodArguments, matchingConstructor, hasMatchingNonDefaultCtor);
             return new ModelInterceptor(model);
         }
 
-        private object[] GetConstructorArguments(object[] factoryMethodArguments, bool hasMatchingNonDefaultCtor)
+        private static object[] GetConstructorArguments(object[] factoryMethodArguments, bool hasMatchingNonDefaultCtor)
         {
             if(hasMatchingNonDefaultCtor)
             {
@@ -58,17 +59,18 @@ namespace DynamicControllersGeneration
             return new object[0];
         }
 
-        private object GetModel(object[] factoryMethodArguments, ConstructorInfo matchingConstructor, bool hasMatchingNonDefaultCtor)
+        private static object GetModel(object[] factoryMethodArguments, ConstructorInfo matchingConstructor, bool hasMatchingNonDefaultCtor)
         {
+            Contract.Ensures(Contract.Result<object>() != null);
             if(hasMatchingNonDefaultCtor)
             {
                 return GetModel(factoryMethodArguments, matchingConstructor);
             }
-
+            
             return factoryMethodArguments[0];
         }
 
-        private ConstructorInfo GetMatchingConstructor(Type viewModelType, IEnumerable<object> factoryMethodArguments)
+        private static ConstructorInfo GetMatchingConstructor(Type viewModelType, IEnumerable<object> factoryMethodArguments)
         {
             Contract.Requires(factoryMethodArguments != null);
             var nonPrivateCtors = viewModelType
@@ -79,18 +81,18 @@ namespace DynamicControllersGeneration
                 .FirstOrDefault(info => IsMatch(info.GetParameters(), argumentsTypes));
         }
 
-        private object GetModel(object[] factoryMethodArguments, ConstructorInfo matchingConstructor)
+        private static object GetModel(object[] factoryMethodArguments, ConstructorInfo matchingConstructor)
         {
             var ctorParameters = matchingConstructor.GetParameters();
             for (int i = 0; i < ctorParameters.Length; i++)
             {
-                if(ctorParameters[i].IsDefined(typeof (ModelAttribute), false))
+                if (ctorParameters[i].IsDefined(typeof (ModelAttribute), false))
                 {
                     return factoryMethodArguments[i];
                 }
             }
 
-            if (ctorParameters.Length == 1 && factoryMethodArguments.Length==1)
+            if (ctorParameters.Length == 1 && factoryMethodArguments.Length == 1)
             {
                 return factoryMethodArguments[0];
             }
@@ -98,7 +100,7 @@ namespace DynamicControllersGeneration
             throw new NotImplementedException();
         }
 
-        private bool IsMatch(ParameterInfo[] parameters, Type[] arguments)
+        private static bool IsMatch(ParameterInfo[] parameters, Type[] arguments)
         {
             if(parameters.Length != arguments.Length)
             {
@@ -114,34 +116,6 @@ namespace DynamicControllersGeneration
             }
 
             return true;
-        }
-
-        private static object[] GetConstructorArguments<T>(object model)
-        {
-            var nonPrivateConstructors = typeof(T).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .Where(constructor => !constructor.IsPrivate);
-            var hasConstructorExpectingModel = nonPrivateConstructors
-                .Any(constructor => IsContructorExpectingModel(constructor, model));
-
-            if (hasConstructorExpectingModel)
-            {
-                return new[] {model};
-            }
-            
-            return new object[0];
-        }
-
-        private static bool IsContructorExpectingModel(ConstructorInfo constructor, object model)
-        {
-            var constructorParameters = constructor.GetParameters();
-            var isExpectingSingleArgument = constructorParameters.Length == 1;
-            if (!isExpectingSingleArgument)
-            {
-                return false;
-            }
-
-            var isParametersMatchingModel = constructorParameters[0].ParameterType.IsAssignableFrom(model.GetType());
-            return isParametersMatchingModel;
         }
     }
 }
